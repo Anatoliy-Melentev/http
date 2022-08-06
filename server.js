@@ -14,25 +14,28 @@ const requestListener = ({ method, url }, res) => {
       },
       redirect: () => {
         code = 301;
-        text = 'ресурс теперь постоянно доступен по адресу /redirected';
+        text = 'Ресурс теперь постоянно доступен по адресу /redirected';
+        res.setHeader('Location', '/redirected');
       },
     },
     POST: {
       post: () => {
-        writeFileSync(`${join(__dirname, 'files')}\\file${Date.now()}.txt`, 'Some content!', () => {
-          if (err) throw err;
-          console.log('File created!');
-        });
-      }
+        try {
+          writeFileSync(`${join(__dirname, 'files')}\\file${Date.now()}.txt`, 'Some content!');
+        } catch (e) {
+          code = 500;
+          text = `File not created: ${e}`;
+        }
+      },
     },
     DELETE: {
       delete: () => {
-        const files = readdirSync(join(__dirname, 'files'))
-
-        unlinkSync(`${join(__dirname, 'files')}\\${files[0]}`, () => {
-          if (err) throw err;
-          console.log('File deleted!');
-        });
+        try {
+          unlinkSync(`${join(__dirname, 'files')}\\${readdirSync(join(__dirname, 'files'))[0]}`);
+        } catch (e) {
+          code = 500;
+          text = `File not deleted: ${e}`;
+        }
       }
     },
   }
@@ -55,6 +58,4 @@ const requestListener = ({ method, url }, res) => {
 
 const server = createServer(requestListener);
 
-server.listen(port, host, () => {
-  console.log(`Server is running on http://${host}:${port}`);
-});
+server.listen(port, host, () => console.log(`Server is running on http://${host}:${port}`));
